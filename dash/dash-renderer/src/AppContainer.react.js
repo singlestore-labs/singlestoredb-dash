@@ -52,19 +52,25 @@ class UnconnectedAppContainer extends React.Component {
         dispatch(setConfig(config));
     }
 
+    componentDidMount() {
+        window.addEventListener('message', async event => {
+            const parsedEvent = JSON.parse(event.data);
+            if (parsedEvent.kind == 'UPDATE_JWT_TOKEN') {
+                const {config, dispatch} = this.props;
+                config.fetch.headers[
+                    'Authorization'
+                ] = `Bearer ${parsedEvent.data}`;
+                dispatch(setConfig(config));
+            }
+        });
+    }
+
     render() {
-        const {config, dispatch} = this.props;
-        if (type(config) === 'Null') {
+        const {config} = this.props;
+        if (type(config) === 'Null' || !config.fetch.headers['Authorization']) {
             return <div className='_dash-loading'>Loading...</div>;
         }
         const {show_undo_redo} = config;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const authToken = urlParams.get('authToken');
-        if (authToken) {
-            config.fetch.headers['Authorization'] = `Bearer ${authToken}`;
-            dispatch(setConfig(config));
-        }
 
         return (
             <React.Fragment>
